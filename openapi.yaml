@@ -1,0 +1,36 @@
+swagger: "2.0"
+info:
+  description: This is the swagger file that goes with our server code
+  version: "1.0.0"
+  title: Surf Up
+consumes:
+  - application/json
+produces:
+  - application/json
+
+basePath: /api/v1.0
+
+# Paths supported by the server application
+paths:
+  /precipitation:
+    get:
+      operationId: app.precipitation
+      tags:
+        - Precipitation
+      summary: Read the entire set of precipitation, sorted by id
+      description: Read the entire set of precipitation, sorted by id
+      responses:
+        200:
+          description: Successfully read cocktails set operation
+          schema:
+            type: "array"
+            items:
+              properties:
+                id:
+                  type: "string"
+                station:
+                  type: "string"
+                prcp:
+                  type: "string"
+                tobs:
+                  type: "string"
