@@ -1,5 +1,5 @@
 """
-Main module of the server app
+Main module of the weather server app
 """
 
 __version__ = "0.1.0"
@@ -13,31 +13,22 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
 
-# @connex_app.route("/api/v1.0/precipitation")
 def precipitation():
-    prev_year = date(2017, 8, 23) - timedelta(days=365)
-    precipitation = (
-        db.session.query(Measurement.date, Measurement.prcp)
-        .filter(Measurement.date >= prev_year)
-        .all()
-    )
+    db.create_all()
+    precipitation = Measurement.query.all()
+    print(type(precipitation))
     precipitation_schema = MeasurementSchema(many=True)
+    print(type(precipitation_schema))
     prep_sch_json = precipitation_schema.dump(precipitation)
-    return jsonify(prep_sch_json)
+    print(type(prep_sch_json))
+    return prep_sch_json
 
-
-# @connex_app.route("/api/v1.0/stations")
 def stations():
     return
 
-
-# @connex_app.route("/api/v1.0/tobs")
 def temp_monthly():
     return
 
-
-# @connex_app.route("/api/v1.0/temp/<start>")
-# @connex_app.route("/api/v1.0/temp/<start>/<end>")
 def stats():
     return
 
@@ -61,7 +52,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Create the SQLAlchemy db instance
 db = SQLAlchemy(app)
 
-
 class Measurement(db.Model):
     __tablename__ = "measurement"
     id = db.Column(db.Integer, primary_key=True)
@@ -69,7 +59,6 @@ class Measurement(db.Model):
     date = db.Column(db.Date)
     prcp = db.Column(db.Float)
     tobs = db.Column(db.Float)
-
 
 class Station(db.Model):
     __tablename__ = "station"
@@ -80,28 +69,31 @@ class Station(db.Model):
     longitude = db.Column(db.Float)
     elevation = db.Column(db.Float)
 
-
 # Initialize Marshmallow
 ma = Marshmallow(app)
 
-
 class MeasurementSchema(ma.SQLAlchemySchema):
-    def __init__(self, **kwargs):
-        super().__init__(strict=True, **kwargs)
-
     class Meta:
         model = Measurement
         sqla_session = db.session
 
+    id = ma.auto_field()
+    station = ma.auto_field()
+    date = ma.auto_field()
+    prcp = ma.auto_field()
+    tobs = ma.auto_field()
 
 class StationSchema(ma.SQLAlchemySchema):
-    def __init__(self, **kwargs):
-        super().__init__(strict=True, **kwargs)
-
     class Meta:
         model = Station
         sqla_session = db.session
 
+    id = ma.auto_field()
+    station = ma.auto_field()
+    name = ma.auto_field()
+    latitude = ma.auto_field()
+    longitude = ma.auto_field()
+    elevation = ma.auto_field()
 
 db.init_app(app)
 
@@ -114,6 +106,26 @@ def index():
     :return:        the rendered template "index.html"
     """
     return render_template("index.html")
+
+# @connex_app.route("/api/v1.0/precipitation")
+def precipitation():
+    return
+
+
+# @connex_app.route("/api/v1.0/stations")
+def stations():
+    return
+
+
+# @connex_app.route("/api/v1.0/tobs")
+def temp_monthly():
+    return
+
+
+# @connex_app.route("/api/v1.0/temp/<start>")
+# @connex_app.route("/api/v1.0/temp/<start>/<end>")
+def stats():
+    return
 
 
 if __name__ == "__main__":

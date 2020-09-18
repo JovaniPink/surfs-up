@@ -1,6 +1,6 @@
 swagger: "2.0"
 info:
-  description: This is the swagger file that goes with our server code
+  description: Set Up the Flask Weather App that pulls climate data.
   version: "1.0.0"
   title: Surf Up
 consumes:
@@ -8,7 +8,7 @@ consumes:
 produces:
   - application/json
 
-basePath: /api/v1.0
+basePath: /api/
 
 # Paths supported by the server application
 paths:
@@ -17,20 +17,22 @@ paths:
       operationId: app.precipitation
       tags:
         - Precipitation
-      summary: Read the entire set of precipitation, sorted by id
-      description: Read the entire set of precipitation, sorted by id
+      summary: Return the precipitation data for the last year.
+      description: precipitation return an array with a pair of (Date, Float).
       responses:
         200:
-          description: Successfully read cocktails set operation
+          description: Successfully read precipitation data.
           schema:
             type: "array"
             items:
               properties:
                 id:
-                  type: "string"
+                  type: integer
                 station:
                   type: "string"
+                date:
+                  type: "string"
                 prcp:
-                  type: "string"
+                  type: number
                 tobs:
-                  type: "string"
+                  type: number
