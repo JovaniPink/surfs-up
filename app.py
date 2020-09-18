@@ -5,37 +5,25 @@ Main module of the server app
 __version__ = "0.1.0"
 
 import os
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import connexion
+from flask import jsonify
 from flask.templating import render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
-# Test Data to serve with our API
-TEST = {
-    "Station_One": {
-        "id": "234233",
-        "station": "sdfdsfdsfsdf",
-        "prcp": "sdfsdfsdfsdfsdf",
-        "tobs": "sdfsdhfnsldvlsin",
-    },
-    "Station_Two": {
-        "id": "234234",
-        "station": "sdfdsfdsfsdf",
-        "prcp": "sdfsdfsdfsdfsdf",
-        "tobs": "sdfsdhfnsldvlsin",
-    },
-    "Station_Three": {
-        "id": "234235",
-        "station": "sdfdsfdsfsdf",
-        "prcp": "sdfsdfsdfsdfsdf",
-        "tobs": "sdfsdhfnsldvlsin",
-    },
-}
 
 # @connex_app.route("/api/v1.0/precipitation")
 def precipitation():
-    return [TEST[key] for key in sorted(TEST.keys())]
+    prev_year = date(2017, 8, 23) - timedelta(days=365)
+    precipitation = (
+        db.session.query(Measurement.date, Measurement.prcp)
+        .filter(Measurement.date >= prev_year)
+        .all()
+    )
+    precipitation_schema = MeasurementSchema(many=True)
+    prep_sch_json = precipitation_schema.dump(precipitation)
+    return jsonify(prep_sch_json)
 
 
 # @connex_app.route("/api/v1.0/stations")
@@ -52,8 +40,6 @@ def temp_monthly():
 # @connex_app.route("/api/v1.0/temp/<start>/<end>")
 def stats():
     return
-
-
 
 
 # Create the connexion application instance
@@ -80,7 +66,7 @@ class Measurement(db.Model):
     __tablename__ = "measurement"
     id = db.Column(db.Integer, primary_key=True)
     station = db.Column(db.String)
-    date = db.Column(db.String)
+    date = db.Column(db.Date)
     prcp = db.Column(db.Float)
     tobs = db.Column(db.Float)
 
@@ -128,7 +114,6 @@ def index():
     :return:        the rendered template "index.html"
     """
     return render_template("index.html")
-
 
 
 if __name__ == "__main__":
