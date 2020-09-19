@@ -4,33 +4,22 @@ Main module of the weather server app
 
 __version__ = "0.1.0"
 
-import os
-from datetime import date, datetime, timedelta
+
+from datetime import date, timedelta
 import connexion
 from flask import jsonify
 from flask.templating import render_template
-from flask_sqlalchemy import SQLAlchemy
-from flask_marshmallow import Marshmallow
+from sqlalchemy import func
+import numpy as np
+# Having these separate Python files is good because you can use the same model to query or load data outside of an app.
+from models import Measurement, Station
+from database import db_session, init_db
 
-
+#### CONNEXTION FUNCTIONS ###
+### https://connexion.readthedocs.io/en/latest/
 def precipitation():
-    db.create_all()
     precipitation = Measurement.query.all()
-    print(type(precipitation))
-    precipitation_schema = MeasurementSchema(many=True)
-    print(type(precipitation_schema))
-    prep_sch_json = precipitation_schema.dump(precipitation)
-    print(type(prep_sch_json))
-    return prep_sch_json
-
-def stations():
-    return
-
-def temp_monthly():
-    return
-
-def stats():
-    return
+    return jsonify([precipitation.to_dict() for record in precipitation])
 
 
 # Create the connexion application instance
@@ -39,63 +28,6 @@ connex_app = connexion.FlaskApp(__name__)
 connex_app.add_api("openapi.yaml")
 # Get the underlying Flask app instance
 app = connex_app.app
-
-# basedir = os.path.abspath(os.path.dirname(__file__))
-# # Build the Sqlite ULR for SQLAlchemy
-# sqlite_url = "sqlite:////" + os.path.join(basedir, "hawaii.db")
-
-# Configure the SQLAlchemy part of the app instance
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///hawaii.db"
-app.config["SQLALCHEMY_ECHO"] = True
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-# Create the SQLAlchemy db instance
-db = SQLAlchemy(app)
-
-class Measurement(db.Model):
-    __tablename__ = "measurement"
-    id = db.Column(db.Integer, primary_key=True)
-    station = db.Column(db.String)
-    date = db.Column(db.Date)
-    prcp = db.Column(db.Float)
-    tobs = db.Column(db.Float)
-
-class Station(db.Model):
-    __tablename__ = "station"
-    id = db.Column(db.Integer, primary_key=True)
-    station = db.Column(db.String)
-    name = db.Column(db.String)
-    latitude = db.Column(db.Float)
-    longitude = db.Column(db.Float)
-    elevation = db.Column(db.Float)
-
-# Initialize Marshmallow
-ma = Marshmallow(app)
-
-class MeasurementSchema(ma.SQLAlchemySchema):
-    class Meta:
-        model = Measurement
-        sqla_session = db.session
-
-    id = ma.auto_field()
-    station = ma.auto_field()
-    date = ma.auto_field()
-    prcp = ma.auto_field()
-    tobs = ma.auto_field()
-
-class StationSchema(ma.SQLAlchemySchema):
-    class Meta:
-        model = Station
-        sqla_session = db.session
-
-    id = ma.auto_field()
-    station = ma.auto_field()
-    name = ma.auto_field()
-    latitude = ma.auto_field()
-    longitude = ma.auto_field()
-    elevation = ma.auto_field()
-
-db.init_app(app)
 
 # Create a URL route in our application for "/"
 @connex_app.route("/")
@@ -107,26 +39,65 @@ def index():
     """
     return render_template("index.html")
 
-# @connex_app.route("/api/v1.0/precipitation")
+
+@connex_app.route("/api/v1.0/precipitation")
 def precipitation():
-    return
+    prev_year = date(2017, 8, 23) - timedelta(days=365)
+    precipitation = (
+        db_session.query(Measurement.date, Measurement.prcp)
+        .filter(Measurement.date >= prev_year)
+        .all()
+    )
+    precip = {date: prcp for date, prcp in precipitation}
+    return jsonify(precip)
 
 
-# @connex_app.route("/api/v1.0/stations")
+@connex_app.route("/api/v1.0/stations")
 def stations():
-    return
+    # return('Show stations')
+    results = db_session.query(Station.station).all()
+    stations = list(np.ravel(results))
+    # return jsonify(stations)
+    return jsonify(stations=stations)
 
 
-# @connex_app.route("/api/v1.0/tobs")
+@connex_app.route("/api/v1.0/tobs")
 def temp_monthly():
-    return
+    prev_year = date(2017, 8, 23) - timedelta(days=365)
+    results = (
+        db_session.query(Measurement.tobs)
+        .filter(Measurement.station == "USC00519281")
+        .filter(Measurement.date >= prev_year)
+        .all()
+    )
+    temps = list(np.ravel(results))
+    return jsonify(temps=temps)
 
 
-# @connex_app.route("/api/v1.0/temp/<start>")
-# @connex_app.route("/api/v1.0/temp/<start>/<end>")
-def stats():
-    return
+@connex_app.route("/api/v1.0/temp/<start>")
+@connex_app.route("/api/v1.0/temp/<start>/<end>")
+def stats(start=None, end=None):
+    sel = [
+        func.min(Measurement.tobs),
+        func.avg(Measurement.tobs),
+        func.max(Measurement.tobs),
+    ]
+
+    if not end:
+        results = db_session.query(*sel).filter(Measurement.date <= start).all()
+        temps = list(np.ravel(results))
+        return jsonify(temps)
+
+    results = (
+        db_session.query(*sel)
+        .filter(Measurement.date >= start)
+        .filter(Measurement.date <= end)
+        .all()
+    )
+    temps = list(np.ravel(results))
+    return jsonify(temps=temps)
 
 
 if __name__ == "__main__":
+    init_db()
     connex_app.run(debug=True)
