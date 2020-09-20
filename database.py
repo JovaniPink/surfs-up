@@ -35,6 +35,9 @@ def init_db():
 
 # #### Automap
 # #### https://docs.sqlalchemy.org/en/13/orm/extensions/automap.html
+# If you already have an existing database and want to use it with Flask-SQLAlchemy,
+# reflect and automap might be what you need. Think reflection as read only. automap
+# as class maker.
 
 # from sqlalchemy.ext.automap import automap_base
 # from sqlalchemy.orm import Session

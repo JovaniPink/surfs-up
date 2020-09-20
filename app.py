@@ -2,6 +2,7 @@
 Main module of the weather server app
 """
 
+
 __version__ = "0.1.0"
 
 
@@ -17,6 +18,7 @@ from database import db_session, init_db
 
 #### CONNEXTION FUNCTIONS ###
 ### https://connexion.readthedocs.io/en/latest/
+# Its basically OpenAPI!
 def precipitation():
     precipitation = Measurement.query.all()
     return jsonify([precipitation.to_dict() for record in precipitation])
@@ -26,8 +28,7 @@ def precipitation():
 connex_app = connexion.FlaskApp(__name__)
 # Read the openapi.yaml file to configure the endpoints
 connex_app.add_api("openapi.yaml")
-# Get the underlying Flask app instance
-app = connex_app.app
+
 
 # Create a URL route in our application for "/"
 @connex_app.route("/")
