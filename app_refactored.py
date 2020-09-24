@@ -48,7 +48,7 @@ app = connex_app.app
 # sqlite_url = "sqlite:////" + os.path.join(basedir, "hawaii.db")
 
 # Configure the SQLAlchemy part of the app instance
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///hawaii.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///notebook/hawaii.db"
 app.config["SQLALCHEMY_ECHO"] = True
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
